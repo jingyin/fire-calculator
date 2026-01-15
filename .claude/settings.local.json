@@ -8,7 +8,8 @@
       "Bash(npx shadcn@latest add card input label button slider -y)",
       "Bash(npm run build:*)",
       "Bash(npx shadcn@latest add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

@@ -23,6 +23,7 @@ A sophisticated Financial Independence, Retire Early (FIRE) calculator with real
   - Initial annual contribution
   - Contribution growth rate (0-10%)
   - Long-term inflation rate (0-6%)
+- **URL Parameter Sync**: All inputs are reflected in URL parameters for easy sharing
 - Mouse wheel support for sliders
 - Responsive design with dark mode
 - Real-time chart updates when toggling nominal/real views
@@ -150,6 +151,11 @@ Recharts-based visualization showing:
    - Inflation behaves as expected
 
 5. **Understand the spread**: The gap between 10p and 90p shows the impact of timing and sequence risk
+
+6. **Share your scenario**: Copy the URL to share your exact parameters with others. Example:
+   ```
+   http://localhost:3000/?startingAssets=100000&annualReturn=0.07&initialContribution=20000&contributionGrowthRate=0.05&inflationRate=0.025
+   ```
 
 ## Mathematical Details
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,20 +16,59 @@ import {
 } from "@/lib/simulation";
 import { FIREChart } from "./FIREChart";
 
+const DEFAULT_PARAMS: SimulationParams = {
+  startingAssets: 100000,
+  annualReturn: 0.07,
+  initialContribution: 20000,
+  contributionGrowthRate: 0.05,
+  inflationRate: 0.025,
+  years: 30,
+};
+
 export function FIRECalculator() {
-  const [params, setParams] = useState<SimulationParams>({
-    startingAssets: 100000,
-    annualReturn: 0.07,
-    initialContribution: 20000,
-    contributionGrowthRate: 0.05,
-    inflationRate: 0.025,
-    years: 30,
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Initialize params from URL or defaults
+  const [params, setParams] = useState<SimulationParams>(() => {
+    const urlParams: Partial<SimulationParams> = {};
+
+    const startingAssets = searchParams.get("startingAssets");
+    if (startingAssets) urlParams.startingAssets = Number(startingAssets);
+
+    const annualReturn = searchParams.get("annualReturn");
+    if (annualReturn) urlParams.annualReturn = Number(annualReturn);
+
+    const initialContribution = searchParams.get("initialContribution");
+    if (initialContribution) urlParams.initialContribution = Number(initialContribution);
+
+    const contributionGrowthRate = searchParams.get("contributionGrowthRate");
+    if (contributionGrowthRate) urlParams.contributionGrowthRate = Number(contributionGrowthRate);
+
+    const inflationRate = searchParams.get("inflationRate");
+    if (inflationRate) urlParams.inflationRate = Number(inflationRate);
+
+    return { ...DEFAULT_PARAMS, ...urlParams };
   });
 
   const [simulations, setSimulations] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showReal, setShowReal] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
+
+  // Update URL when params change
+  useEffect(() => {
+    const newSearchParams = new URLSearchParams();
+    newSearchParams.set("startingAssets", params.startingAssets.toString());
+    newSearchParams.set("annualReturn", params.annualReturn.toString());
+    newSearchParams.set("initialContribution", params.initialContribution.toString());
+    newSearchParams.set("contributionGrowthRate", params.contributionGrowthRate.toString());
+    newSearchParams.set("inflationRate", params.inflationRate.toString());
+
+    const newUrl = `${pathname}?${newSearchParams.toString()}`;
+    router.replace(newUrl, { scroll: false });
+  }, [params, pathname, router]);
 
   const handleCalculate = () => {
     setIsCalculating(true);
