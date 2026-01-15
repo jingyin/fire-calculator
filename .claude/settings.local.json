@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(source ~/.nvm/nvm.sh)",
+      "Bash(nvm use:*)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@latest add card input label button slider -y)",
+      "Bash(npm run build:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
