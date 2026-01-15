@@ -154,8 +154,19 @@ Recharts-based visualization showing:
 
 6. **Share your scenario**: Copy the URL to share your exact parameters with others. Example:
    ```
-   http://localhost:3000/?startingAssets=100000&annualReturn=0.07&initialContribution=20000&contributionGrowthRate=0.05&inflationRate=0.025
+   http://localhost:3000/?startingAssets=100000&annualReturn=0.07&initialContribution=20000&contributionGrowthRate=0.05&inflationRate=0.025&view=real&seed=123456
    ```
+
+   URL Parameters:
+   | Param | Description |
+   |-------|-------------|
+   | `startingAssets` | Initial portfolio value |
+   | `annualReturn` | Target annual return (decimal, e.g., 0.07 for 7%) |
+   | `initialContribution` | First year contribution |
+   | `contributionGrowthRate` | Annual increase in contributions |
+   | `inflationRate` | Target inflation rate |
+   | `view` | Display mode: `real` (default) or `nominal` |
+   | `seed` | Random seed for reproducible simulations |
 
 ## Mathematical Details
 
@@ -177,6 +188,12 @@ exp(sum(log(1 + r_i))) = (1 + targetReturn)^30
 
 ### Inflation Floor
 Inflation rates are constrained to be non-negative using `Math.max(0, ...)`, which may cause slight deviation from the target in low-inflation scenarios.
+
+### Reproducibility
+Simulations use a seeded pseudo-random number generator (Mulberry32). The seed is:
+- Auto-generated on first calculation
+- Stored in the URL for sharing
+- Guarantees identical results when sharing links
 
 ## Limitations
 

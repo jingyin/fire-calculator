@@ -54,10 +54,17 @@ export function FIRECalculator() {
 
   const [simulations, setSimulations] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [showReal, setShowReal] = useState(true);
+  const [showReal, setShowReal] = useState(() => {
+    const viewParam = searchParams.get("view");
+    return viewParam === "nominal" ? false : true; // default to real
+  });
   const [showDebug, setShowDebug] = useState(false);
+  const [seed, setSeed] = useState<number | null>(() => {
+    const seedParam = searchParams.get("seed");
+    return seedParam ? Number(seedParam) : null;
+  });
 
-  // Update URL when params change
+  // Update URL when params, view, or seed change
   useEffect(() => {
     const newSearchParams = new URLSearchParams();
     newSearchParams.set("startingAssets", params.startingAssets.toString());
@@ -65,16 +72,24 @@ export function FIRECalculator() {
     newSearchParams.set("initialContribution", params.initialContribution.toString());
     newSearchParams.set("contributionGrowthRate", params.contributionGrowthRate.toString());
     newSearchParams.set("inflationRate", params.inflationRate.toString());
+    newSearchParams.set("view", showReal ? "real" : "nominal");
+    if (seed !== null) {
+      newSearchParams.set("seed", seed.toString());
+    }
 
     const newUrl = `${pathname}?${newSearchParams.toString()}`;
     router.replace(newUrl, { scroll: false });
-  }, [params, pathname, router]);
+  }, [params, showReal, seed, pathname, router]);
 
   const handleCalculate = () => {
     setIsCalculating(true);
+    // Generate a seed if not already set, or use existing seed
+    const simulationSeed = seed ?? Math.floor(Math.random() * 1000000);
+    setSeed(simulationSeed);
+
     // Use setTimeout to allow UI to update
     setTimeout(() => {
-      const results = runMonteCarloSimulation(params, 100);
+      const results = runMonteCarloSimulation(params, 100, simulationSeed);
       const nominalPercentiles = calculatePercentiles(results, [10, 25, 50, 75, 90], false);
       const realPercentiles = calculatePercentiles(results, [10, 25, 50, 75, 90], true);
 

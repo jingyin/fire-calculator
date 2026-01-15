@@ -1,3 +1,16 @@
+/**
+ * Seeded random number generator (Mulberry32)
+ * Returns a function that generates random numbers in [0, 1)
+ */
+function createSeededRandom(seed: number) {
+  return function() {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 export interface SimulationParams {
   startingAssets: number;
   annualReturn: number; // e.g., 0.07 for 7%
@@ -33,7 +46,12 @@ export interface SimulationResult {
  *
  * The product of (1 + r_i) for all years equals (1 + annualReturn)^years
  */
-function generateRandomizedReturns(annualReturn: number, years: number, volatility: number = 0.30): number[] {
+function generateRandomizedReturns(
+  annualReturn: number,
+  years: number,
+  random: () => number,
+  volatility: number = 0.30
+): number[] {
   const targetLogReturn = Math.log(1 + annualReturn);
   const totalTargetLogReturn = targetLogReturn * years;
 
@@ -41,8 +59,8 @@ function generateRandomizedReturns(annualReturn: number, years: number, volatili
   const logReturns: number[] = [];
   for (let i = 0; i < years; i++) {
     // Box-Muller transform to generate normal random numbers
-    const u1 = Math.random();
-    const u2 = Math.random();
+    const u1 = random();
+    const u2 = random();
     const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
 
     // Generate log return with mean = targetLogReturn and std = volatility
@@ -67,7 +85,12 @@ function generateRandomizedReturns(annualReturn: number, years: number, volatili
  *
  * The product of (1 + i_j) for all years equals (1 + inflationRate)^years
  */
-function generateRandomizedInflation(inflationRate: number, years: number, volatility: number = 0.015): number[] {
+function generateRandomizedInflation(
+  inflationRate: number,
+  years: number,
+  random: () => number,
+  volatility: number = 0.015
+): number[] {
   // If inflation rate is 0, return all zeros (no simulation needed)
   if (inflationRate === 0) {
     return new Array(years).fill(0);
@@ -79,8 +102,8 @@ function generateRandomizedInflation(inflationRate: number, years: number, volat
   // Generate random log inflation using Box-Muller transform for normal distribution
   const logInflations: number[] = [];
   for (let i = 0; i < years; i++) {
-    const u1 = Math.random();
-    const u2 = Math.random();
+    const u1 = random();
+    const u2 = random();
     const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
 
     // Generate log inflation with mean = targetLogInflation and std = volatility
@@ -104,11 +127,11 @@ function generateRandomizedInflation(inflationRate: number, years: number, volat
 /**
  * Run a single FIRE simulation with randomized yearly returns
  */
-export function runSimulation(params: SimulationParams): SimulationResult {
+export function runSimulation(params: SimulationParams, random: () => number): SimulationResult {
   const { startingAssets, annualReturn, initialContribution, contributionGrowthRate, inflationRate, years } = params;
 
-  const randomReturns = generateRandomizedReturns(annualReturn, years);
-  const randomInflations = generateRandomizedInflation(inflationRate, years);
+  const randomReturns = generateRandomizedReturns(annualReturn, years, random);
+  const randomInflations = generateRandomizedInflation(inflationRate, years, random);
 
   const yearlyData: YearData[] = [];
   let balance = startingAssets;
@@ -163,14 +186,19 @@ export function runSimulation(params: SimulationParams): SimulationResult {
 
 /**
  * Run multiple simulations to show range of possible outcomes (Monte Carlo)
+ * @param seed - Base seed for reproducible simulations
  */
 export function runMonteCarloSimulation(
   params: SimulationParams,
-  numSimulations: number = 100
+  numSimulations: number = 100,
+  seed: number = Date.now()
 ): SimulationResult[] {
   const results: SimulationResult[] = [];
   for (let i = 0; i < numSimulations; i++) {
-    results.push(runSimulation(params));
+    // Create a different seed for each simulation
+    const simulationSeed = seed + i;
+    const random = createSeededRandom(simulationSeed);
+    results.push(runSimulation(params, random));
   }
   return results;
 }
