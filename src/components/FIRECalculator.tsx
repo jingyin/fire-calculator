@@ -81,13 +81,16 @@ export function FIRECalculator() {
     router.replace(newUrl, { scroll: false });
   }, [params, showReal, seed, pathname, router]);
 
-  const handleCalculate = () => {
-    setIsCalculating(true);
-    // Generate a seed if not already set, or use existing seed
-    const simulationSeed = seed ?? Math.floor(Math.random() * 1000000);
-    setSeed(simulationSeed);
+  // Auto-run simulation if seed is in URL on mount
+  useEffect(() => {
+    if (seed !== null && simulations === null) {
+      runSimulationWithSeed(seed);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
 
-    // Use setTimeout to allow UI to update
+  const runSimulationWithSeed = (simulationSeed: number) => {
+    setIsCalculating(true);
     setTimeout(() => {
       const results = runMonteCarloSimulation(params, 100, simulationSeed);
       const nominalPercentiles = calculatePercentiles(results, [10, 25, 50, 75, 90], false);
@@ -100,6 +103,13 @@ export function FIRECalculator() {
       });
       setIsCalculating(false);
     }, 100);
+  };
+
+  const handleCalculate = () => {
+    // Always generate a new seed when user clicks Calculate
+    const newSeed = Math.floor(Math.random() * 1000000);
+    setSeed(newSeed);
+    runSimulationWithSeed(newSeed);
   };
 
   const updateParam = (key: keyof SimulationParams, value: number) => {
